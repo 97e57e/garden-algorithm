@@ -1,10 +1,11 @@
 package kakao;
 
-import java.util.*;
-
 public class Pillar {
     // 14:22 시작
     // 15:50 실패 [잘못된 풀이를 깨달음]
+    
+    // 14:00 시작
+    // 15:06 종료 [정답]
     public static void main(String[] args) {
         Pillar pillar = new Pillar();
 
@@ -44,223 +45,138 @@ public class Pillar {
         }
     }
 
-
+    static int[][][] map;
     public int[][] solution(int n, int[][] build_frame) {
-        int[][] answer = {};
-        Set<Poll> pollSet = new HashSet<>();
-        Set<Bo> boSet = new HashSet<>();
+        int[][] answer;
+        int boCount = 0;
+        int pollCount = 0;
+        map = new int[101][101][2]; //[][][0]은 기둥 [][][1]은 보
 
         for (int i=0; i<build_frame.length; i++) {
+            int command = build_frame[i][3];
+
             int newY = build_frame[i][1];
             int newX = build_frame[i][0];
-            int command = build_frame[i][3];
+
             if (build_frame[i][2] == 0){
                 //기둥
-                Poll poll = new Poll(newY, newX);
                 if (command ==1) {
-                    //기둥을 설치 한다.
-                    if (newY == 0) {
-                        // 바닥 이라면 그냥 설치
-                        pollSet.add(poll);
-                    } else {
-                        //바닥이 아니라면
-                        boolean isOk = false;
-                        // 바로 아래에 기둥이 있다.
-                        for (Poll poll1 : pollSet) {
-                            if (poll1.y == newY - 1) isOk = true;
-                        }
-                        // 바로 아래에 보가 있다.
-                        for (Bo bo : boSet) {
-                            if ((bo.x == newX && bo.y == newY) ||
-                                    (bo.x == newX-1 && bo.y == newY)) isOk = true;
-                        }
-                        // 그럼 설치
-                        if (isOk) pollSet.add(poll);
+                   //기둥 설치
+                    if (canPoll(newY, newX)) {
+                        map[newY][newX][0] = 1;
+                        pollCount++;
                     }
                 } else {
                     //기둥을 삭제한다.
-                    boolean downPoll = false;
-                    boolean upPoll = false;
-                    boolean leftDownBo = false;
-                    boolean rightDownBo = false;
-                    boolean leftUpBo = false;
-                    boolean rightUpBo = false;
-
-                    boolean delete = true;
-
-                    // 기둥 근처의 기둥을 조사
-                    for (Poll poll1 : pollSet) {
-                        if (poll1.y == newY - 1) downPoll = true;
-                        if (poll1.y == newY + 1) upPoll = true;
+                    if (map[newY][newX][0] == 1) {
+                        map[newY][newX][0] = 0;
+                        pollCount--;
+                        if (!check()){
+                            map[newY][newX][0] = 1;
+                            pollCount++;
+                        }
                     }
 
-                    // 기둥 근처의 보를 조사
-                    for (Bo bo : boSet) {
-                        if (bo.y == newY && bo.x == newX) rightDownBo = true;
-                        if (bo.y == newY && bo.x == newX-1) leftDownBo = true;
-                        if (bo.y == newY+1 && bo.x == newX) rightUpBo = true;
-                        if (bo.y == newY+1 && bo.x == newX-1) leftUpBo = true;
-                    }
-
-                    // 아래 기둥이 없는데 보도 없으면 삭제 불가
-                    if (((!leftDownBo && !rightDownBo) && !downPoll) && (newY != 0)){
-                        delete = false;
-                    } else if (!upPoll && ((leftUpBo && !rightUpBo) || (!leftUpBo && rightUpBo))){
-                        // 위에 기둥이 없는데 보가 한쪽만 있다면 삭제 불가
-                        delete = false;
-                    }
-                    if (delete) pollSet.remove(poll);
                 }
-
             } else {
                 //보
-                Bo bo = new Bo(newY, newX);
                 if (command ==1) {
-                    boolean leftBo = false;
-                    boolean rightBo = false;
-                    boolean leftUpPoll = false;
-                    boolean rightUpPoll = false;
-                    boolean leftDownPoll = false;
-                    boolean rightDownPoll = false;
-
                     // 보를 설치
-
-                    // 보 검사
-                    for (Bo bo1 : boSet) {
-                        if (bo1.y == newY && bo1.x == newX - 1) leftBo = true;
-                        if (bo1.y == newY && bo1.x == newX + 1) rightBo = true;
+                    if (canBo(newY, newX)) {
+                        boCount++;
+                        map[newY][newX][1] = 1;
                     }
-
-                    // 기둥 검사
-                    for (Poll poll : pollSet) {
-                        if (poll.x == newX && poll.y == newY) leftUpPoll = true;
-                        if (poll.x == newX && poll.y == newY-1) leftDownPoll = true;
-                        if (poll.x == newX + 1 && poll.y == newY) rightUpPoll = true;
-                        if (poll.x == newX + 1 && poll.y == newY-1) rightDownPoll = true;
-                    }
-
-                    boolean isOk = false;
-
-                    // 왼쪽이나 오른쪽 모두에 기동 혹은 보가 있다면
-                    if (leftDownPoll) isOk = true;
-                    if (rightDownPoll) isOk = true;
-                    if (leftBo && rightBo) isOk = true;
-
-                    if (isOk) boSet.add(bo);
                 } else {
-                    boolean leftBo = false;
-                    boolean rightBo = false;
-                    boolean leftUpPoll = false;
-                    boolean rightUpPoll = false;
-                    boolean leftDownPoll = false;
-                    boolean rightDownPoll = false;
-
-                    boolean delete = true;
                     // 보를 삭제
-                    for (Bo bo1 : boSet) {
-                        if (bo1.y == newY && bo1.x == newX - 1) rightBo = true;
-                        if (bo1.y == newY && bo1.x == newX + 1) leftBo = true;
+                    if (map[newY][newX][1] == 1) {
+                        map[newY][newX][1] = 0;
+                        boCount--;
+                        if (!check()) {
+                            boCount++;
+                            map[newY][newX][1] = 1;
+                        }
                     }
-
-                    // 기둥 검사
-                    for (Poll poll : pollSet) {
-                        if (poll.x == newX && poll.y == newY) leftUpPoll = true;
-                        if (poll.x == newX && poll.y == newY-1) leftDownPoll = true;
-                        if (poll.x == newX + 1 && poll.y == newY) rightUpPoll = true;
-                        if (poll.x == newX + 1 && poll.y == newY-1) rightDownPoll = true;
-                    }
-
-                    if (leftUpPoll && (!leftDownPoll && !leftBo)) delete = false;
-                    if (rightUpPoll && (!rightDownPoll && rightBo)) delete = false;
-                    if (!leftUpPoll && !leftDownPoll && !rightUpPoll && !rightDownPoll) delete = false;
-
-                    if (delete) boSet.remove(bo);
                 }
             }
         }
-        List<Poll> pollList = new ArrayList<>(pollSet);
-        List<Bo> boList = new ArrayList<>(boSet);
+        // 기둥과 보의 수만큼 answer 배열 생성
+        answer = new int[pollCount+boCount][3];
+        int answerIdx = 0;
 
-        answer = new int[boList.size() + pollSet.size()][3];
+        // 오름차순 순서에 맞게 변
+        for (int j=0; j<map.length; j++) {
+            for (int i=0; i<map.length; i++) {
+                //
+                if (map[i][j][0] == 1) {
+                    answer[answerIdx][0] = j;
+                    answer[answerIdx][1] = i;
+                    answer[answerIdx][2] = 0;
+                    answerIdx ++;
+                }
 
-        for (int i=0; i<pollList.size(); i++) {
-            Poll p = pollList.get(i);
-            answer[i][0] = p.x;
-            answer[i][1] = p.y;
-            answer[i][2] = 0;
-        }
-        for (int i=pollList.size(); i<boList.size() + pollList.size(); i++) {
-            Bo b = boList.get(i - pollList.size());
-            answer[i][0] = b.x;
-            answer[i][1] = b.y;
-            answer[i][2] = 1;
-        }
-
-        Arrays.sort(answer, new Comparator<int[]>() {
-            @Override
-            public int compare(int[] o1, int[] o2) {
-                if (o1[0] == o2[0]) {
-                    if (o1[1] == o2[1]) {
-                        return o1[2] - o2[2];
-                    } else {
-                        return o1[1] - o2[1];
-                    }
-                } else {
-                    return o1[0] - o2[0];
+                if (map[i][j][1] == 1) {
+                    answer[answerIdx][0] = j;
+                    answer[answerIdx][1] = i;
+                    answer[answerIdx][2] = 1;
+                    answerIdx ++;
                 }
             }
-        });
+        }
 
         return answer;
     }
 
-    // 바닥을 기준으로
-    class Poll {
-        int y;
-        int x;
+    // 한쪽 끝 부분이 기둥 위에 있거나, 양쪽 끝 부분이 다른 보 연결되어야 한다.
+    private boolean canBo(int newY, int newX) {
+        if (newY-1>=0 && (map[newY-1][newX][0] == 1 || map[newY-1][newX+1][0] == 1)) return true;
 
-        public Poll(int y, int x) {
-            this.y = y;
-            this.x = x;
-        }
+        if (newX-1>=0 && map[newY][newX-1][1] == 1 && map[newY][newX+1][1] == 1) return true;
 
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            Poll poll = (Poll) o;
-            return y == poll.y &&
-                    x == poll.x;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(y, x);
-        }
+        return false;
     }
 
-    // 왼쪽을 기준으로
-    class Bo {
-        int y;
-        int x;
-
-        public Bo(int y, int x) {
-            this.y = y;
-            this.x = x;
+    // 맵 전체를 돌며 기둥과 보가 유효 한지 검
+    private boolean check() {
+        for (int i=0; i<map.length; i++) {
+            for (int j=0; j<map.length; j++) {
+                if (map[i][j][0] == 1) {
+                    //기둥
+                    if (!canPoll(i,j)) return false;
+                }
+                if (map[i][j][1] == 1) {
+                    // 보
+                    if (!canBo(i, j)) return false;
+                }
+            }
         }
+        return true;
+    }
 
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            Bo bo = (Bo) o;
-            return y == bo.y &&
-                    x == bo.x;
+    private boolean canPoll(int newY, int newX) {
+        // 바닥
+        if (newY == 0) return true;
+        // 바로 아래 기둥
+        if(map[newY-1][newX][0] == 1) return  true;
+        // 바로 아래 오른쪽 보
+        if(map[newY][newX][1] == 1) return true;
+        // 바로 아래 왼쪽 보
+        if(newX-1>=0 && map[newY][newX-1][1] == 1) return true;
+
+        return false;
+    }
+
+    public void print(int[][][] a) {
+        for (int i=0; i<a.length; i++) {
+            for (int j=0; j<a.length; j++) {
+                System.out.print(a[i][j][0] + " ");
+            }
+            System.out.println(" ");
         }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(y, x);
+        for (int i=0; i<a.length; i++) {
+            for (int j=0; j<a.length; j++) {
+                System.out.print(a[i][j][1] + " ");
+            }
+            System.out.println(" ");
         }
     }
 }
